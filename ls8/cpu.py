@@ -2,6 +2,13 @@
 
 import sys
 
+
+# Machine code:
+
+HLT = 0b00000001
+LDI = 0b10000010
+PRN = 0b01000111
+
 class CPU:
     """Main CPU class."""
 
@@ -77,4 +84,41 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+
+        running = True
+
+        # Using `ram_read()`, read the bytes at `PC+1` and `PC+2` from RAM into variables `operand_a` and `operand_b` in case the instruction needs them.
+        operand_a = self.ram_read(self.pc + 1)
+        operand_b = self.ram_read(self.pc + 2)
+
+        while running:
+            # read the memory address that's stored in register `PC`, and store that result in `IR`
+            ir = self.ram_read(self.pc)
+
+            # exit the loop if a `HLT` instruction is encountered
+            # Halt the CPU (and exit the emulator)
+            if ir == HLT:
+                print("HLT")
+                running = False
+                self.pc += 1
+                sys.exit(1)
+
+            
+            # Set the value of a register to an integer
+            elif ir == LDI:
+                print("LDI")
+                self.reg[operand_a] = operand_b
+                self.pc += 3
+
+
+            # Print numeric value stored in the given register
+            # Print to the console the decimal integer value that is stored in the given register
+            elif ir == PRN:
+                print("PRN")
+                print(self.reg[operand_a])
+                self.pc += 2
+
+            else:
+                print(f"Unknown instruction: {ir}")
+                sys.exit(1)
+        
