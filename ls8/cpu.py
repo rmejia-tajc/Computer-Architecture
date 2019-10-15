@@ -5,9 +5,10 @@ import sys
 
 # Machine code:
 
-HLT = 0b00000001
-LDI = 0b10000010
-PRN = 0b01000111
+HLT = 1    # 0b00000001
+LDI = 130  # 0b10000010
+PRN = 71   # 0b01000111
+MUL = 162  # 0b10100010
 
 class CPU:
     """Main CPU class."""
@@ -20,26 +21,53 @@ class CPU:
 
 
 
-    def load(self):
+    def load(self,filename):
         """Load a program into memory."""
 
-        address = 0
+        try:
+            address = 0
 
-        # For now, we've just hardcoded a program:
+            with open(filename) as f:
+                for line in f:
+                    # Process comments:
+                    # Ignore anything after a # symbol
+                    comment_split = line.split("#") # splits the line at the # symbol
+                    # takes the first part of the split
+                    num = comment_split[0].strip() # strip() removes all leading and trailing whitespace
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+                    if num == "": # if blank line, continue
+                        continue
+                    
+                    # Convert any numbers from binary strings to integers
+                    try:
+                        val = int(num, 2)
+                    except ValueError:
+                        continue
+                    # adds the value to the memory
+                    self.ram[address] = val
+                    address += 1
 
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+        except FileNotFoundError:
+            print(f"{sys.argv[0]}: {sys.argv[1]} not found")
+            sys.exit(2)
+
+        # address = 0
+
+        # # For now, we've just hardcoded a program:
+
+        # program = [
+        #     # From print8.ls8
+        #     0b10000010, # LDI R0,8
+        #     0b00000000,
+        #     0b00001000,
+        #     0b01000111, # PRN R0
+        #     0b00000000,
+        #     0b00000001, # HLT
+        # ]
+
+        # for instruction in program:
+        #     self.ram[address] = instruction
+        #     address += 1
 
 
     def alu(self, op, reg_a, reg_b):
@@ -87,13 +115,13 @@ class CPU:
 
         running = True
 
-        # Using `ram_read()`, read the bytes at `PC+1` and `PC+2` from RAM into variables `operand_a` and `operand_b` in case the instruction needs them.
-        operand_a = self.ram_read(self.pc + 1)
-        operand_b = self.ram_read(self.pc + 2)
-
         while running:
             # read the memory address that's stored in register `PC`, and store that result in `IR`
             ir = self.ram_read(self.pc)
+
+            # Using `ram_read()`, read the bytes at `PC+1` and `PC+2` from RAM into variables `operand_a` and `operand_b` in case the instruction needs them.
+            operand_a = self.ram_read(self.pc + 1)
+            operand_b = self.ram_read(self.pc + 2)
 
             # exit the loop if a `HLT` instruction is encountered
             # Halt the CPU (and exit the emulator)
@@ -108,6 +136,7 @@ class CPU:
             elif ir == LDI:
                 print("LDI")
                 self.reg[operand_a] = operand_b
+                print(self.reg[operand_a])
                 self.pc += 3
 
 
@@ -117,6 +146,15 @@ class CPU:
                 print("PRN")
                 print(self.reg[operand_a])
                 self.pc += 2
+
+
+            # Multiply the values in two registers together and store the result in registerA
+            elif ir == MUL:
+                print("MUL")
+                print(self.reg[operand_a])
+                print(self.reg[operand_b])
+                self.reg[operand_a] = self.reg[operand_a] * self.reg[operand_b]
+                self.pc += 3
 
             else:
                 print(f"Unknown instruction: {ir}")
