@@ -9,6 +9,8 @@ HLT = 1    # 0b00000001
 LDI = 130  # 0b10000010
 PRN = 71   # 0b01000111
 MUL = 162  # 0b10100010
+PUSH = 69  # 0b01000101
+POP = 70   # 0b01000110
 
 class CPU:
     """Main CPU class."""
@@ -17,7 +19,10 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 256 # holds 256 bytes of memory
         self.reg = [0] * 8 # 8 general-purpose registers
-        self.pc = 0 # the program counter
+        self.pc = 0 # Program Counter, address of the currently executing instruction
+        self.sp = 7 # Stack Pointer Location is register 7
+
+        self.reg[self.sp] = 0xf4 # 244
 
 
 
@@ -117,6 +122,7 @@ class CPU:
 
         while running:
             # read the memory address that's stored in register `PC`, and store that result in `IR`
+            # Instruction Register, contains a copy of the currently executing instruction
             ir = self.ram_read(self.pc)
 
             # Using `ram_read()`, read the bytes at `PC+1` and `PC+2` from RAM into variables `operand_a` and `operand_b` in case the instruction needs them.
@@ -136,7 +142,7 @@ class CPU:
             elif ir == LDI:
                 print("LDI")
                 self.reg[operand_a] = operand_b
-                print(self.reg[operand_a])
+                # print(self.reg[operand_a])
                 self.pc += 3
 
 
@@ -151,10 +157,32 @@ class CPU:
             # Multiply the values in two registers together and store the result in registerA
             elif ir == MUL:
                 print("MUL")
-                print(self.reg[operand_a])
-                print(self.reg[operand_b])
+                # print(self.reg[operand_a])
+                # print(self.reg[operand_b])
                 self.reg[operand_a] = self.reg[operand_a] * self.reg[operand_b]
                 self.pc += 3
+
+            # Push the value in the given register on the stack
+            elif ir == PUSH:
+                print("PUSH")
+                reg = self.ram[self.pc + 1]
+                val = self.reg[reg]
+                # Decrement the Stack Pointer
+                self.reg[self.sp] -= 1
+                # Copy the value in the given register to the address pointed to by Stack Pointer
+                self.ram[self.reg[self.sp]] = val
+                self.pc += 2
+
+            elif ir == POP:
+                print("POP")
+                reg = self.ram[self.pc + 1]
+                val = self.ram[self.reg[self.sp]]
+                # Copy the value from the address pointed to by SP to the given register.
+                self.reg[reg] = val
+                # Increment SP.
+                self.reg[self.sp] += 1
+                self.pc += 2
+
 
             else:
                 print(f"Unknown instruction: {ir}")
