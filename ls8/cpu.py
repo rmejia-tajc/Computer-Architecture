@@ -11,6 +11,9 @@ PRN = 71   # 0b01000111
 MUL = 162  # 0b10100010
 PUSH = 69  # 0b01000101
 POP = 70   # 0b01000110
+CALL = 80  # 0b01010000
+RET = 17   # 0b00010001
+ADD = 160  # 0b10100000
 
 class CPU:
     """Main CPU class."""
@@ -182,6 +185,28 @@ class CPU:
                 # Increment SP.
                 self.reg[self.sp] += 1
                 self.pc += 2
+
+            elif ir == CALL:
+                print("CALL")
+                # Push the return address on the stack
+                self.reg[self.sp] -= 1
+                self.ram[self.reg[self.sp]] = self.pc + 2
+
+                # The PC is set to the address stored in the given register
+                reg = self.ram[self.pc +1]
+                # We jump to that location in RAM and execute the first instruction in the subroutine
+                self.pc = self.reg[reg]
+
+            elif ir == RET:
+                # Return from the subroutine
+                # Pop the value from the top of the stack and store it in the PC
+                self.pc = self.ram[self.reg[self.sp]]
+                self.reg[self.sp] += 1
+
+            elif ir == ADD:
+                print("ADD")
+                self.reg[operand_a] = self.reg[operand_a] + self.reg[operand_b]
+                self.pc += 3
 
 
             else:
