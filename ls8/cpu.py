@@ -14,6 +14,7 @@ POP = 70   # 0b01000110
 CALL = 80  # 0b01010000
 RET = 17   # 0b00010001
 ADD = 160  # 0b10100000
+CMP = 167  # 0b10100111
 
 class CPU:
     """Main CPU class."""
@@ -23,10 +24,12 @@ class CPU:
         self.ram = [0] * 256 # holds 256 bytes of memory
         self.reg = [0] * 8 # 8 general-purpose registers
         self.pc = 0 # Program Counter, address of the currently executing instruction
+
         self.sp = 7 # Stack Pointer Location is register 7
+        self.reg[self.sp] = 0xf4 # 244 # Stack Pointer
 
-        self.reg[self.sp] = 0xf4 # 244
-
+        self.fl = 6 # Flag Location is register 6
+        self.reg[self.fl] = 0b00000000 # Flag register - `FL` bits: `00000LGE`
 
 
     def load(self,filename):
@@ -207,6 +210,21 @@ class CPU:
                 print("ADD")
                 self.reg[operand_a] = self.reg[operand_a] + self.reg[operand_b]
                 self.pc += 3
+
+            elif ir == CMP:
+                print("CMP")
+                if self.reg[operand_a] == self.reg[operand_b]:
+                    print("EQUALS")
+                    self.reg[self.fl] = 0b00000001
+                elif self.reg[operand_a] < self.reg[operand_b]:
+                    print("LESS THAN")
+                    self.reg[self.fl] = 0b00000100
+                elif self.reg[operand_a] > self.reg[operand_b]:
+                    print("GREATER THAN")
+                    self.reg[self.fl] = 0b00000010
+                self.pc += 3
+                
+
 
 
             else:
